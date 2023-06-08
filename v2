@@ -1,0 +1,102 @@
+(ns testt.menu
+  (:require [clojure.string :as str]
+            [clojure.java.io :as io]))
+
+(defn display-file-list []
+  (println "File List:")
+  (doseq [file (file-seq (io/file "."))]
+    (println "* " (.getPath file))))
+
+(defn display-file-contents [file-path]
+  (let [content (slurp file-path)]
+    (println "File Contents:")
+    (println content)))
+
+(defn load-frequency-map [file-path]
+  (with-open [reader (io/reader file-path)]
+    (let [lines (clojure.string/split-lines (slurp reader))
+          words (->> lines
+                     (mapcat #(clojure.string/split % #"\s+")))]
+      (frequencies words))))
+
+
+
+
+(defn get-word-frequency-map [words frequency-map]
+  (map #(or (get frequency-map %) "0") words))
+
+(defn compress-file [file-path frequency-file]
+  (let [frequency-map (load-frequency-map frequency-file)
+        words (-> file-path
+                  slurp
+                  (str/split #"\s+"))
+        compressed-words (get-word-frequency-map words frequency-map)
+        compressed-content (clojure.string/join " " compressed-words)
+        compressed-file-path (str file-path ".ct")]
+    (println "Frequency Map:")
+    (prn frequency-map)
+    (println "Words:")
+    (prn words)
+    (println "Compressed Words:")
+    (prn compressed-words)
+    (println "Compressed Content:")
+    (println compressed-content)
+    (spit compressed-file-path compressed-content)
+    (println "File compressed successfully.")
+    compressed-file-path))
+
+(defn decompress-file [file-path]
+  (let [frequency-map (read-string (slurp "frequency.txt"))
+        compressed-content (slurp file-path)
+        decompressed-words (map #(or (get (rseq frequency-map) %) %) (str/split compressed-content #"[\s]+"))
+        decompressed-content (str/join " " decompressed-words)]
+    (println "Decompressed File Contents:")
+    (println decompressed-content)))
+
+(defn -main []
+  (loop []
+    (println "                         ")
+    (println "*** Compression Menu ***")
+    (println "1. Display list of files")
+    (println "2. Display file contents")
+    (println "3. Compress a file")
+    (println "4. Uncompress a file")
+    (println "5. Exit")
+    (println "                         ")
+
+    (println "Enter an option:")
+    (println "                         ")
+
+    (let [option (read-line)]
+      (cond
+        (= option "1") (do
+                         (display-file-list)
+                         (recur))
+        (= option "2") (do
+                         (print "Enter file path to display contents: ")
+                         (let [file-path (read-line)]
+                           (display-file-contents file-path))
+                         (recur))
+        (= option "3") (do
+                         (println "Enter file path to compress:")
+                         (let [file-path (read-line)
+                               frequency-file "frequency.txt"
+                               compressed-file (compress-file file-path frequency-file)]
+                           (println "Compressed file saved as" compressed-file))
+                         (recur))
+        (= option "4") (do
+                         (print "Enter file path to decompress: ")
+                         (let [file-path (read-line)]
+                           (try
+                             (decompress-file file-path)
+                             (catch java.io.FileNotFoundException e
+                               (println "File not found."))))
+                         (recur))
+        (= option "5") (do
+                         (println "Exiting...")
+                         (System/exit 0))
+        :else (do
+                (println "Invalid option. Please try again.")
+                (recur))))))
+
+(-main)
