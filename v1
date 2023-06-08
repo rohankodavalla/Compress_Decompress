@@ -1,0 +1,81 @@
+(ns testt.menu
+  (:require [clojure.string :as str]))
+
+(defn display-file-list []
+  (println "File List:")
+  (doseq [file (file-seq (clojure.java.io/file "."))]
+    (println "* " (.getPath file))))
+
+(defn display-file-contents [file-path]
+  (let [content (slurp file-path)]
+    (println "File Contents:")
+    (println content)))
+
+(defn compress-file [file-path]
+  (let [frequency-map (read-string (slurp "frequency.txt"))
+        words (str/split (slurp file-path) #"[\s\.,?!;\[\]\(\)]+")
+        compressed-words (map #(or (get frequency-map %) %) words)
+        compressed-content (str/join " " compressed-words)
+        compressed-file-path (str file-path ".ct")]
+    (spit compressed-file-path compressed-content)
+    (println "File compressed successfully.")
+    compressed-file-path))
+
+(defn decompress-file [file-path]
+  (let [frequency-map (read-string (slurp "frequency.txt"))
+        compressed-content (slurp file-path)
+        decompressed-words (map #(or (get (rseq frequency-map) %) %) (str/split compressed-content #"[\s]+"))
+        decompressed-content (str/join " " decompressed-words)]
+    (println "Decompressed File Contents:")
+    (println decompressed-content)))
+
+(defn -main []
+  (loop []
+    (println "                         ")
+    (println "*** Compression Menu ***")
+    (println "1. Display list of files")
+    (println "2. Display file contents")
+    (println "3. Compress a file")
+    (println "4. Uncompress a file")
+    (println "5. Exit")
+    (println "                         ")
+
+    (println "Enter an option:")
+    (println "                         ")
+
+    (let [option (read-line)]
+      (cond
+        (= option "1") (do
+                         (display-file-list)
+                         (recur))
+        (= option "2") (do
+                         (print "Enter file path to display contents: ")
+                         (let [file-path (read-line)]
+                           (display-file-contents file-path))
+                         (recur))
+        (= option "3") (do
+                         (print "Enter file path to compress: ")
+                         (let [file-path (read-line)]
+                           (compress-file file-path))
+                         (recur))
+        (= option "4") (do
+                         (print "Enter file path to decompress: ")
+                         (let [file-path (read-line)]
+                           (decompress-file file-path))
+                         (recur))
+        (= option "5") (do
+                         (println "Exiting...")
+                         (System/exit 0))
+        :else (do
+                (println "Invalid option. Please try again.")
+                (recur))))))
+
+(-main)
+
+
+;; menu is working fine, but check the condiitons for compressing and decompressing a file in core.clj code and compare it 
+;; with this code , also add t1.txt in this folder and see if option 2 - display works 
+
+;; 2.0 > above works but, not compressing >. search from freq table in lower case and upper case 
+;; , and print a statement if option 2 is selected 
+;; if someother option is selected, is is exiting with filenotfoundexception 
