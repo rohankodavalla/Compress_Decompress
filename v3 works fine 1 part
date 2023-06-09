@@ -1,0 +1,124 @@
+(ns testt.menu
+  (:require [clojure.string :as str]
+            [clojure.java.io :as io]))
+
+;; Step 1: Read the frequency map and assign values to words
+(defn create-frequency-map [frequency-file]
+  (with-open [file-reader (clojure.java.io/reader frequency-file)]
+    (let [lines (line-seq file-reader)]
+      (zipmap (mapv keyword (range)) lines))))
+
+;; Step 2: Compress the text file
+(defn compress-file [file frequency-map compressed-file]
+  (with-open [input-file (clojure.java.io/reader file)
+              output-file (clojure.java.io/writer compressed-file)]
+    (let [words (clojure.string/split (clojure.string/lower-case (slurp input-file)) #"[\s.,!?]+")]
+      (doseq [word words]
+        (let [value (frequency-map word)]
+          (when value
+            (spit output-file (str value " ") :append true)))))))
+
+(defn display-file-list []
+  (println "File List:")
+  (doseq [file (file-seq (io/file "."))]
+    (println "* " (.getPath file))))
+
+(defn display-file-contents [file-path]
+  (let [content (slurp file-path)]
+    (println "File Contents:")
+    (println content)))
+
+(defn load-frequency-map [file-path]
+  (with-open [reader (io/reader file-path)]
+    (let [lines (clojure.string/split-lines (slurp reader))
+          words (->> lines
+                     (mapcat #(clojure.string/split % #"\s+"))
+                     (mapv clojure.string/lower-case))
+          unique-words (distinct words)]
+      (zipmap unique-words (range (count unique-words))))))
+
+
+
+(defn get-word-index-map [words frequency-map]
+  (map #(or (get frequency-map (clojure.string/lower-case %)) %) words))
+
+(defn compress-file [file-path frequency-file]
+  (let [frequency-map (load-frequency-map frequency-file)
+        words (-> file-path
+                  slurp
+                  (str/split #"\s+"))
+        compressed-words (get-word-index-map words frequency-map)
+        compressed-content (clojure.string/join " " compressed-words)
+        compressed-file-path (str file-path ".ct")]
+    (println "Frequency Map:")
+    (prn frequency-map)
+    (println "Words:")
+    (prn words)
+    (println "Compressed Words:")
+    (prn compressed-words)
+    (println "Compressed Content:")
+    (println compressed-content)
+    (spit compressed-file-path compressed-content)
+    (println "File compressed successfully.")
+    compressed-file-path))
+
+
+(defn decompress-file [file-path frequency-file]
+  (let [frequency-map (load-frequency-map frequency-file)
+        compressed-content (slurp file-path)
+        decompressed-words (map #(or (get (rseq frequency-map) %) %) (str/split compressed-content #"[\s]+"))
+        decompressed-content (str/join " " decompressed-words)
+        decompressed-file-path (str file-path ".txt")]
+    (println "Decompressed File Contents:")
+    (println decompressed-content)
+    (spit decompressed-file-path decompressed-content)
+    (println "File decompressed successfully.")
+    decompressed-file-path))
+
+(defn process-menu-option [option]
+  (cond
+    (= option "1") (do
+                     (display-file-list)
+                     :continue)
+    (= option "2") (do
+                     (print "Enter file path to display contents: ")
+                     (let [file-path (read-line)]
+                       (display-file-contents file-path))
+                     :continue)
+    (= option "3") (do
+                     (println "Enter file path to compress:")
+                     (let [file-path (read-line)
+                           frequency-file "frequency.txt"
+                           compressed-file (compress-file file-path frequency-file)]
+                       (println "Compressed file saved as" compressed-file))
+                     :continue)
+    (= option "4") (do
+                     (println "Enter file path to decompress:")
+                     (let [file-path (read-line)
+                           frequency-file "frequency.txt"
+                           decompressed-file (decompress-file file-path frequency-file)]
+                       (println "Decompressed file saved as" decompressed-file))
+                     :continue)
+    (= option "5") (do
+                     (println "Exiting...")
+                     :exit)
+    :else (do
+            (println "Invalid option. Please try again.")
+            :continue)))
+
+(defn menu-loop []
+  (loop []
+    (println "Menu:")
+    (println "1. Display File List")
+    (println "2. Display File Contents")
+    (println "3. Compress a File")
+    (println "4. Decompress a File")
+    (println "5. Exit")
+    (print "Enter your option: ")
+    (let [option (read-line)]
+      (let [result (process-menu-option option)]
+        (if (= result :continue)
+          (recur)
+          (println "Exiting..."))))))
+
+(menu-loop)
