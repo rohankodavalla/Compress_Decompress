@@ -1,0 +1,19 @@
+(defn decompress-file [file-path frequency-file]
+  (let [frequency-map (-> frequency-file load-frequency-map)
+        reversed-frequency-map (zipmap (vals frequency-map) (keys frequency-map))
+        compressed-content (slurp file-path)
+        index-words (str/split compressed-content #"\s+")
+        decompressed-words (map #(if (re-matches #"^\d+$" %)
+                                  (or (get reversed-frequency-map (Integer/parseInt %)) "")
+                                  %)
+                                index-words)
+        formatted-words (map-indexed (fn [idx word]
+                                      (if (or (= idx 0) (re-matches #"[.!?]" (nth decompressed-words (- idx 1))))
+                                        (clojure.string/capitalize word)
+                                        word))
+                                    decompressed-words)
+        formatted-content (clojure.string/join " " formatted-words)]
+    (println "Decompressed File Contents:")
+    (println formatted-content)))
+
+(decompress-file "t3.txt.ct" "frequency.txt")
