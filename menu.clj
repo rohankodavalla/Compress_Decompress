@@ -85,55 +85,125 @@
         compressed-words (get-word-index-map compressed-words frequency-map)
         compressed-content (clojure.string/join " " compressed-words)
         compressed-file-path (str file-path ".ct")]
-    (println "Frequency Map:")
-    (prn frequency-map)
+    ;;(println "Frequency Map:")
+    ;;(prn frequency-map)
     (with-open [file-writer (clojure.java.io/writer "frequency.txt.ct")]
         (doseq [[key value] frequency-map]
             (.write file-writer (str key " " value "\n"))))
 
-    (println "Words:")
-    (prn words)
-    (println "Compressed Words:")
-    (prn compressed-words)
-    (println "Compressed Content:")
-    (println compressed-content)
-    (spit compressed-file-path compressed-content)
+    ;;(println "Words:")
+    ;;(prn words)
+    ;;(println "Compressed Words:")
+    ;;(prn compressed-words)
+    ;;(println "Compressed Content:")
+    ;;(println compressed-content)
+    ;;(spit compressed-file-path compressed-content)
     (println "File compressed successfully.")
     compressed-file-path))
 
+;; <<<<<<<<<<<<<<<<<<<<<<   test area decomperssion >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
 
-(defn decompress-file1 [file-path frequency-file]
+;; >>> The experienced 372, named Oz, representing the @416@148 code - and his (2147) assistant - are not in the suggested @732 [250, 230]. is that actually the correct 294?
+(defn decompress-file [file-path frequency-file]
   (let [frequency-map (-> frequency-file load-frequency-map)
         reversed-frequency-map (zipmap (vals frequency-map) (keys frequency-map))
         compressed-content (slurp file-path)
-        decompressed-words (map #(or (get reversed-frequency-map %) %) (str/split compressed-content #"[\s]+"))
-        decompressed-content (str/join " " decompressed-words)
-        decompressed-file-path (str file-path ".txt")]
-    (println "Decompressed File Contents:")
-    (println decompressed-content)
-    (spit decompressed-file-path decompressed-content)
-    (println "File decompressed successfully.")
-    decompressed-file-path))
+        formatted-content (-> compressed-content
+                            ;;(clojure.string/replace #"(?<=\w\s*)[.,?!]" "$0 ")
+                            
+                            (str/replace #"\s+(?=[,\]\)\?\.])" "") ; Remove spaces before ",", "]", and ")"
+                            (str/replace #"(?<=[\@])\d(?=[\@])" "") ; Remove spaces after ",", "]", and ")"
+                            (str/replace #"(?<=[\[\(\@])\s+" "")) ; Remove spaces after
 
-;;; below is where we left off 
+        index-words (str/split formatted-content #"\s+")
+        decompressed-words (map #(if (re-matches #"^\d+$" %)
+                                  (or (get reversed-frequency-map (Integer/parseInt %)) "")
+                                  %)
+                                index-words)
+        formatted-words (map-indexed (fn [idx word]
+                                       (if (or (= idx 0) (re-matches #"[.!?]" (nth decompressed-words (- idx 1))))
+                                         (str/capitalize word)
+                                         word))
+                                     decompressed-words)]
+
+   ;; (println compressed-content)
+   ;; (println "formatted-content")
+    ;;(println formatted-content )
+    (println "Decompressed File Contents:")
+    (println (str/join " " formatted-words))))
+
+(decompress-file "t3.txt.ct" "frequency.txt")
+
+
+
+
+;;v.latest.works except spaces test decompress file for updates is below - 
+;; >>>>>>>>  The experienced man ,  named Oz ,  representing the @416@ area code - and his ( principal ) assistant - are not in the suggested @ list [ production ,  development ] . Is that actually the correct information ?
+(defn decompress-file3 [file-path frequency-file]
+  (let [frequency-map (-> frequency-file load-frequency-map)
+        reversed-frequency-map (zipmap (vals frequency-map) (keys frequency-map))
+        compressed-content (slurp file-path)
+        index-words (str/split compressed-content #"\s+")
+        decompressed-words (map #(if (re-matches #"^\d+$" %)
+                                  (or (get reversed-frequency-map (Integer/parseInt %)) "")
+                                  %)
+                                index-words)
+
+        decompressed-words1 (map #(-> %
+                                   (str/replace #"\s+(?=[,\]\)\?\.])" "") ; Remove spaces before ",", "]", ")", "?", and "."
+                                   (str/replace #"(?<=[\@])\d(?=[\@])" "") ; Remove spaces after "@"
+                                   (str/replace #"(?<=[\[\(\@])\s+" "")) ; Remove spaces after "[" and "("
+                              decompressed-words)
+        formatted-words (map-indexed (fn [idx word]
+                                       (if (or (= idx 0) (re-matches #"[.!?]" (nth decompressed-words (- idx 1))))
+                                         (clojure.string/capitalize word)
+                                         word))
+                                     decompressed-words1)
+        formatted-words (map #(str/replace % #"\s?,\s?" ", ") formatted-words)
+        formatted-content (clojure.string/join " " formatted-words)]
+    formatted-content
+
+
+    
+    (println "Formatted Words:")
+    (println formatted-words)
+    
+    (println "Decompressed File Contents:")
+    (println formatted-content)))
+
+;;(decompress-file "t3.txt.ct" "frequency.txt")
+
+
+
+
+;; capital alphabet after punctuation  decompress file for updates is below - Decompressed File Contents:
+;; >>>>>    The experienced man , named Oz , representing the @416@ area code - and his ( principal ) assistant - are not in the suggested @ list [ production , development ] . Is that actually the correct information ?
 (defn decompress-file2 [file-path frequency-file]
   (let [frequency-map (-> frequency-file load-frequency-map)
         reversed-frequency-map (zipmap (vals frequency-map) (keys frequency-map))
         compressed-content (slurp file-path)
-        index-words (map #(or (get reversed-frequency-map %) %) (str/split compressed-content #"[\s]+"))
-        decompressed-words (map #(if (re-matches #"^@\d+@$" %)
-                                 (subs % 1 (dec (count %))) ; Remove "@" symbols
-                                 %)
-                               index-words)
-        decompressed-content (str/join " " decompressed-words)
-        decompressed-file-path (str file-path ".txt")]
+        index-words (str/split compressed-content #"\s+")
+        decompressed-words (map #(if (re-matches #"^\d+$" %)
+                                  (or (get reversed-frequency-map (Integer/parseInt %)) "")
+                                  %)
+                                index-words)
+        formatted-words (map-indexed (fn [idx word]
+                                      (if (or (= idx 0) (re-matches #"[.!?]" (nth decompressed-words (- idx 1))))
+                                        (clojure.string/capitalize word)
+                                        word))
+                                    decompressed-words)
+        formatted-content (clojure.string/join " " formatted-words)]
     (println "Decompressed File Contents:")
-    (println decompressed-content)
-    (spit decompressed-file-path decompressed-content)
-    (println "File decompressed successfully.")
-    decompressed-file-path))
+    (println formatted-content)))
 
-(defn decompress-file [file-path frequency-file]
+;;(decompress-file "t3.txt.ct" "frequency.txt")
+
+
+
+
+;;my working decompress is below
+;; >>>>>>> the experienced man , named Oz , representing the @416@ area code - and his ( principal ) assistant - are not in the suggested @ list [ production , development ] . is that actually the correct information ?
+(defn decompress-file1 [file-path frequency-file]
   (let [frequency-map (-> frequency-file load-frequency-map)
         reversed-frequency-map (zipmap (vals frequency-map) (keys frequency-map))
         compressed-content (slurp file-path)
