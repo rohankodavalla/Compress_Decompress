@@ -23,11 +23,14 @@ Menu Options:
 
   i. Display List of Files:
       - Uses the file-seq function to list files in the current directory.
+
   ii. Display File Contents:
       - Prompts the user for a file name, reads the file using slurp, and prints its content.
+
   iii. Compress a File:
       - Compresses a text file by converting words to numbers based on their frequency in the English language.
       - Frequencies are obtained from a provided frequency.txt file containing the 10,000 most common words.
+
   iv. Decompress a File:
       - Decompresses a previously compressed file and displays the original text on the screen.
       - Handles words not found in the frequency list by keeping them in their original form.
