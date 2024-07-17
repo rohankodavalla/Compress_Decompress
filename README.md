@@ -35,7 +35,7 @@ This project aims to practice functional programming using the Clojure programmi
       - Decompresses a previously compressed file and displays the original text on the screen.
       - Handles words not found in the frequency list by keeping them in their original form.
       
-Task Details:
+                                                          <<<  Task Details:  >>>
 
   i. File Listing:
       - Implement a function to list all files in the current directory using file-seq.
