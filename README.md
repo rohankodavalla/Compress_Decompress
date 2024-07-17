@@ -20,6 +20,7 @@ This project aims to practice functional programming using the Clojure programmi
 **Solution Explanation:**
 
 Menu Options:
+
   i. Display List of Files:
       - Uses the file-seq function to list files in the current directory.
   ii. Display File Contents:
